@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TikTok LIVE Custom Chat</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;background:transparent;overflow:hidden;font-family:Inter,Arial,sans-serif}
+#chat{position:absolute;left:18px;bottom:18px;width:460px;display:flex;flex-direction:column;gap:10px}
+.msg{
+  display:flex;align-items:flex-start;gap:10px;width:max-content;max-width:100%;
+  padding:9px 14px 10px 9px;border-radius:16px;
+  background:rgba(12,12,16,.78);border:1px solid rgba(255,255,255,.10);
+  box-shadow:0 8px 25px rgba(0,0,0,.25);
+  color:#fff;backdrop-filter:blur(8px);
+  animation:in .35s ease both;
+}
+.avatar{width:34px;height:34px;border-radius:50%;object-fit:cover;background:#333;flex:none}
+.body{min-width:0;line-height:1.25}
+.name{font-size:13px;font-weight:800;color:#ff4f9a;margin-bottom:2px}
+.text{font-size:15px;word-break:break-word}
+.badge{font-size:10px;padding:2px 5px;border-radius:6px;background:#ff2d55;margin-left:5px;vertical-align:2px}
+@keyframes in{from{opacity:0;transform:translateY(12px) scale(.97)}to{opacity:1;transform:none}}
+@keyframes out{to{opacity:0;transform:translateY(-8px)}}
+.msg.out{animation:out .3s ease forwards}
+</style>
+</head>
+<body>
+<div id="chat"></div>
+<script>
+/*
+  ВАЖНО:
+  Этот файл отвечает за красивое отображение сообщений.
+  TikTok LIVE не передаёт чат в обычный HTML сам по себе.
+  Для реальных сообщений нужен отдельный мост/API, который
+  будет вызывать window.addMessage(...).
+*/
+
+const chat=document.getElementById('chat');
+const MAX=7;
+
+window.addMessage=function({name,text,avatar="",badge=false}){
+  const el=document.createElement('div');
+  el.className='msg';
+  el.innerHTML=`
+    <img class="avatar" src="${escapeHtml(avatar || 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2234%22 height=%2234%22><rect width=%2234%22 height=%2234%22 rx=%2217%22 fill=%22%23333%22/></svg>')}" onerror="this.style.display='none'">
+    <div class="body">
+      <div class="name">${escapeHtml(name)}${badge?'<span class="badge">LIVE</span>':''}</div>
+      <div class="text">${escapeHtml(text)}</div>
+    </div>`;
+  chat.appendChild(el);
+
+  while(chat.children.length>MAX) chat.firstElementChild.remove();
+  setTimeout(()=>{if(el.isConnected){el.classList.add('out');setTimeout(()=>el.remove(),300)}},12000);
+};
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+}
+
+// Демо-сообщения. Удали этот блок, когда подключишь реальный мост.
+setTimeout(()=>addMessage({name:"viewer_01",text:"Привет! 👋",badge:true}),500);
+setTimeout(()=>addMessage({name:"spacek",text:"Классный стрим 🔥"}),1800);
+setTimeout(()=>addMessage({name:"guest",text:"Какой FPS в игре?"}),3200);
+</script>
+</body>
+</html>
